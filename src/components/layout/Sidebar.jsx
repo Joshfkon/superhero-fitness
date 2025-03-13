@@ -8,8 +8,9 @@ import {
   Dumbbell, 
   Apple, 
   Activity, 
-  BarChart, 
-  Settings 
+  Settings,
+  Brain,
+  Ruler 
 } from 'lucide-react';
 
 const Sidebar = ({ open, setOpen }) => {
@@ -17,12 +18,12 @@ const Sidebar = ({ open, setOpen }) => {
   
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Data Import', href: '/import', icon: Upload },
-    { name: 'Profile', href: '/profile', icon: UserCircle },
+    { name: 'AI Training Plan', href: '/training-plan', icon: Brain },
     { name: 'Workouts', href: '/workouts', icon: Dumbbell },
+    { name: 'Update Measurements', href: '/measurements', icon: Ruler },
     { name: 'Nutrition', href: '/nutrition', icon: Apple },
     { name: 'Biomarkers', href: '/biomarkers', icon: Activity },
-    { name: 'Analytics', href: '/analytics', icon: BarChart },
+    { name: 'Data Import', href: '/import', icon: Upload },
     { name: 'Settings', href: '/settings', icon: Settings }
   ];
 
@@ -71,7 +72,7 @@ const Sidebar = ({ open, setOpen }) => {
 
         {/* User profile section */}
         <div className="p-4 border-t border-indigo-800">
-          <div className="flex items-center">
+          <Link to="/profile" className="flex items-center">
             <div className="flex-shrink-0">
               <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white">
                 <UserCircle size={20} />
@@ -81,7 +82,7 @@ const Sidebar = ({ open, setOpen }) => {
               <p className="text-sm font-medium text-white">User Profile</p>
               <p className="text-xs text-indigo-300">View profile</p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </>

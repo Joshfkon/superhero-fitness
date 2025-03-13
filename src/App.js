@@ -14,6 +14,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import Workouts from './pages/Workouts';
 import Nutrition from './pages/Nutrition';
 import Biomarkers from './pages/Biomarkers';
+import Measurements from './pages/measurements';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -64,6 +65,7 @@ function App() {
             <Route path="/import" element={<DataImport />} />
             <Route path="/profile" element={<ProfileSetup />} />
             <Route path="/workouts" element={<Workouts />} />
+            <Route path="/measurements" element={<Measurements />} />
             <Route path="/nutrition" element={<Nutrition />} />
             <Route path="/biomarkers" element={<Biomarkers />} />
           </Route>
