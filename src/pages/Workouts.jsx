@@ -19,7 +19,6 @@ const Workouts = () => {
   const [completedWorkouts, setCompletedWorkouts] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
-  
   // Fetch data on component mount
   useEffect(() => {
     fetchWorkouts();
@@ -30,10 +29,13 @@ const Workouts = () => {
     setIsLoading(true);
     setError('');
     try {
+      console.log('Fetching all workouts...');
       const workouts = await workoutService.getWorkouts();
+      console.log('Fetched workouts:', workouts);
       
       // Templates don't have dates
       const templates = workouts.filter(w => !w.date);
+      console.log('Templates:', templates);
       
       // Scheduled workouts have dates and are not completed
       const scheduled = workouts.filter(w => 
@@ -55,7 +57,6 @@ const Workouts = () => {
       setIsLoading(false);
     }
   };
-  
   // Toggle template expansion
   const toggleTemplateExpansion = (templateId) => {
     if (expandedTemplate === templateId) {
@@ -65,6 +66,13 @@ const Workouts = () => {
     }
   };
   
+  // Toggle set type between 'warmup' and 'working'
+  const toggleSetType = (exerciseIndex, setIndex) => {
+    const updatedTemplate = { ...editingTemplate };
+    const set = updatedTemplate.exercises[exerciseIndex].sets[setIndex];
+    set.type = set.type === 'working' ? 'warmup' : 'working';
+    setEditingTemplate(updatedTemplate);
+  };
   // Start a workout from a template or scheduled workout
   const startWorkout = async (workoutId, isTemplate = false) => {
     setIsLoading(true);
@@ -91,7 +99,8 @@ const Workouts = () => {
           sets: ex.sets.map(set => ({ 
             weight: set.weight || '',
             reps: set.reps || '',
-            completed: false
+            completed: false,
+            type: set.type || 'working' // Preserve set type or default to 'working'
           }))
         }))
       };
@@ -126,7 +135,6 @@ const Workouts = () => {
     updatedWorkout.exercises[exerciseIndex].sets[setIndex].completed = !currentStatus;
     setActiveWorkout(updatedWorkout);
   };
-  
   // End and save the current workout
   const completeWorkout = async () => {
     setIsLoading(true);
@@ -190,7 +198,6 @@ const Workouts = () => {
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
-  
   // Estimate workout duration based on exercise count
   const estimateDuration = (exercises) => {
     if (!exercises || !exercises.length) return 0;
@@ -198,9 +205,29 @@ const Workouts = () => {
     let totalTime = 0;
     exercises.forEach(exercise => {
       const sets = exercise.sets ? exercise.sets.length : 0;
-      // Estimate: 1 minute per set + rest time between sets
-      const restTimeMin = parseRestTimeToMinutes(exercise.rest);
-      totalTime += sets * (1 + restTimeMin);
+      
+      // Count working sets and warmup sets separately
+      let workingSets = 0;
+      let warmupSets = 0;
+      
+      if (exercise.sets) {
+        exercise.sets.forEach(set => {
+          if (set.type === 'warmup') {
+            warmupSets++;
+          } else {
+            workingSets++;
+          }
+        });
+      } else {
+        workingSets = sets; // Default all to working sets if type not specified
+      }
+      
+      // Calculate rest times
+      const workingRestMin = parseRestTimeToMinutes(exercise.rest);
+      const warmupRestMin = parseRestTimeToMinutes(exercise.warmupRest || '30 sec');
+      
+      // Estimate: 1 minute per set + appropriate rest time between sets
+      totalTime += (workingSets * (1 + workingRestMin)) + (warmupSets * (1 + warmupRestMin));
     });
     
     return Math.max(10, totalTime); // Minimum 10 minutes
@@ -219,18 +246,33 @@ const Workouts = () => {
     
     return totalMinutes || 1; // Default to 1 minute if parsing fails
   };
-  
   // Start editing a template
   const startEditingTemplate = (template) => {
-    setEditingTemplate({
+    // Ensure each set has a type property
+    const templateWithSetTypes = {
       ...template,
       exercises: template.exercises.map(ex => ({
         ...ex,
-        sets: ex.sets.map(set => ({ ...set }))
+        sets: ex.sets.map(set => ({ 
+          ...set, 
+          type: set.type || 'working' // Ensure each set has a type, default to working
+        }))
       }))
-    });
+    };
+    
+    // Ensure each exercise has a warmupRest property
+    const templateWithWarmupRest = {
+      ...templateWithSetTypes,
+      exercises: templateWithSetTypes.exercises.map(ex => ({
+        ...ex,
+        warmupRest: ex.warmupRest || '30 sec' // Add default warm-up rest time if missing
+      }))
+    };
+    
+    setEditingTemplate(templateWithWarmupRest);
     setIsEditing(true);
   };
+  
   const updateTemplateField = (field, value) => {
     setEditingTemplate({
       ...editingTemplate,
@@ -244,14 +286,19 @@ const Workouts = () => {
     updatedTemplate.exercises[exerciseIndex][field] = value;
     setEditingTemplate(updatedTemplate);
   };
-  
   // Add new exercise to template
   const addExerciseToTemplate = () => {
     const updatedTemplate = { ...editingTemplate };
     const newExercise = {
       name: '',
-      sets: Array(3).fill().map(() => ({ weight: '', reps: '', completed: false })),
+      sets: Array(3).fill().map(() => ({ 
+        weight: '', 
+        reps: '', 
+        completed: false,
+        type: 'working' // Default to working set
+      })),
       rest: '60 sec',
+      warmupRest: '30 sec', // Add default warm-up rest time
       notes: ''
     };
     updatedTemplate.exercises = [...updatedTemplate.exercises, newExercise];
@@ -264,7 +311,6 @@ const Workouts = () => {
     updatedTemplate.exercises = updatedTemplate.exercises.filter((_, index) => index !== exerciseIndex);
     setEditingTemplate(updatedTemplate);
   };
-  
   // Save edited template
   const saveTemplate = async () => {
     setIsLoading(true);
@@ -285,28 +331,55 @@ const Workouts = () => {
         return;
       }
       
-      if (editingTemplate._id) {
+      // Create a clean copy to save - this ensures we don't have any reference issues
+      const templateToSave = JSON.parse(JSON.stringify(editingTemplate));
+      
+      // For template, ensure date is NULL to distinguish from scheduled workouts
+      templateToSave.date = null;
+      
+      // Ensure status is 'planned' for templates
+      templateToSave.status = 'planned';
+      
+      console.log('About to save template:', templateToSave);
+      
+      let savedTemplate;
+      if (templateToSave._id) {
         // Update existing template
-        await workoutService.updateWorkout(editingTemplate._id, editingTemplate);
+        console.log(`Updating template with ID: ${templateToSave._id}`);
+        savedTemplate = await workoutService.updateWorkout(templateToSave._id, templateToSave);
+        console.log('Template updated successfully:', savedTemplate);
       } else {
         // Create new template
-        await workoutService.createWorkout(editingTemplate);
+        console.log('Creating new template');
+        savedTemplate = await workoutService.createWorkout(templateToSave);
+        console.log('Template created successfully:', savedTemplate);
       }
       
       // Refresh templates
+      console.log('Refreshing workout lists');
       await fetchWorkouts();
       
       // Reset editing state
       setIsEditing(false);
       setEditingTemplate(null);
       setIsLoading(false);
+      
+      // Show success message
+      alert('Workout template saved successfully!');
     } catch (err) {
       console.error('Error saving template:', err);
-      setError('Failed to save template. Please try again.');
+      if (err.response) {
+        console.error('API error response:', err.response);
+        setError(`Failed to save template: ${err.response.data.message || err.message}`);
+      } else if (err.request) {
+        console.error('No response received:', err.request);
+        setError('Server did not respond. Please check your network connection and try again.');
+      } else {
+        setError(`Failed to save template: ${err.message}`);
+      }
       setIsLoading(false);
     }
   };
-  
   // Create new template
   const createNewTemplate = () => {
     setEditingTemplate({
@@ -316,8 +389,14 @@ const Workouts = () => {
       exercises: [
         {
           name: '',
-          sets: Array(3).fill().map(() => ({ weight: '', reps: '', completed: false })),
+          sets: Array(3).fill().map(() => ({ 
+            weight: '', 
+            reps: '', 
+            completed: false,
+            type: 'working' // Default to working set
+          })),
           rest: '60 sec',
+          warmupRest: '30 sec', // Add default warm-up rest time
           notes: ''
         }
       ],
@@ -352,7 +431,7 @@ const Workouts = () => {
   const addSetToExercise = (exerciseIndex) => {
     const updatedTemplate = { ...editingTemplate };
     const exercise = updatedTemplate.exercises[exerciseIndex];
-    exercise.sets = [...exercise.sets, { weight: '', reps: '', completed: false }];
+    exercise.sets = [...exercise.sets, { weight: '', reps: '', completed: false, type: 'working' }];
     setEditingTemplate(updatedTemplate);
   };
   
@@ -363,7 +442,6 @@ const Workouts = () => {
     exercise.sets = exercise.sets.filter((_, index) => index !== setIndex);
     setEditingTemplate(updatedTemplate);
   };
-  
   // Schedule a workout from a template
   const scheduleWorkout = async (templateId) => {
     try {
@@ -444,7 +522,6 @@ const Workouts = () => {
       setIsLoading(false);
     }
   };
-  
   // Loading indicator
   if (isLoading && !workoutInProgress) {
     return (
@@ -469,7 +546,6 @@ const Workouts = () => {
           </div>
         </div>
       )}
-      
       {isEditing ? (
         // Template Editor
         <div className="mt-6">
@@ -503,7 +579,6 @@ const Workouts = () => {
                 </button>
               </div>
             </div>
-            
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 mb-6">
                 <div className="sm:col-span-3">
@@ -559,7 +634,6 @@ const Workouts = () => {
                   </select>
                 </div>
               </div>
-              
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Exercises</h3>
                 
@@ -583,9 +657,19 @@ const Workouts = () => {
                         />
                       </div>
                       
-                      <div className="sm:col-span-2 w-32">
+                      <button
+                        type="button"
+                        onClick={() => removeExerciseFromTemplate(exerciseIndex)}
+                        className="mt-4 inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded shadow-sm text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <Trash2 className="mr-1 h-3 w-3" />
+                        Remove
+                      </button>
+                    </div>
+                    <div className="flex space-x-4 mb-4">
+                      <div className="w-1/2">
                         <label htmlFor={`exercise-${exerciseIndex}-rest`} className="block text-sm font-medium text-gray-700">
-                          Rest Time
+                          Working Set Rest
                         </label>
                         <select
                           id={`exercise-${exerciseIndex}-rest`}
@@ -603,16 +687,24 @@ const Workouts = () => {
                         </select>
                       </div>
                       
-                      <button
-                        type="button"
-                        onClick={() => removeExerciseFromTemplate(exerciseIndex)}
-                        className="mt-4 inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded shadow-sm text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" />
-                        Remove
-                      </button>
+                      <div className="w-1/2">
+                        <label htmlFor={`exercise-${exerciseIndex}-warmupRest`} className="block text-sm font-medium text-gray-700">
+                          Warm-up Set Rest
+                        </label>
+                        <select
+                          id={`exercise-${exerciseIndex}-warmupRest`}
+                          value={exercise.warmupRest || '30 sec'}
+                          onChange={(e) => updateExerciseField(exerciseIndex, 'warmupRest', e.target.value)}
+                          className="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        >
+                          <option value="15 sec">15 sec</option>
+                          <option value="30 sec">30 sec</option>
+                          <option value="45 sec">45 sec</option>
+                          <option value="60 sec">60 sec</option>
+                          <option value="90 sec">90 sec</option>
+                        </select>
+                      </div>
                     </div>
-                    
                     <div className="mt-4">
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Sets</h4>
                       <div className="overflow-x-auto">
@@ -621,6 +713,9 @@ const Workouts = () => {
                             <tr>
                               <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Set
+                              </th>
+                              <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
                               </th>
                               <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Target Weight
@@ -638,6 +733,18 @@ const Workouts = () => {
                               <tr key={`set-${setIndex}`}>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                                   {setIndex + 1}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap">
+                                  <button
+                                    onClick={() => toggleSetType(exerciseIndex, setIndex)}
+                                    className={`px-2 py-1 text-xs font-medium rounded-md ${
+                                      set.type === 'warmup' 
+                                        ? 'bg-yellow-100 text-yellow-800' 
+                                        : 'bg-blue-100 text-blue-800'
+                                    }`}
+                                  >
+                                    {set.type === 'warmup' ? 'Warm-up' : 'Working'}
+                                  </button>
                                 </td>
                                 <td className="px-4 py-2 whitespace-nowrap">
                                   <input
@@ -678,7 +785,6 @@ const Workouts = () => {
                           </tbody>
                         </table>
                       </div>
-                      
                       <button
                         type="button"
                         onClick={() => addSetToExercise(exerciseIndex)}
@@ -704,7 +810,6 @@ const Workouts = () => {
                     </div>
                   </div>
                 ))}
-                
                 <button
                   type="button"
                   onClick={addExerciseToTemplate}
@@ -717,36 +822,35 @@ const Workouts = () => {
             </div>
           </div>
         </div>
-      ) : workoutInProgress ? (
-        // Active Workout Interface
-        <div className="mt-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">{activeWorkout.name}</h2>
-                <p className="text-sm text-gray-500">Workout in progress</p>
+        ) : workoutInProgress ? (
+          // Active Workout Interface
+          <div className="mt-6">
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">{activeWorkout.name}</h2>
+                  <p className="text-sm text-gray-500">Workout in progress</p>
+                </div>
+                <div className="flex space-x-4">
+                  <button
+                    type="button"
+                    onClick={completeWorkout}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Complete Workout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelWorkout}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={completeWorkout}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Complete Workout
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelWorkout}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancel
-                </button>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
+              <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               {activeWorkout.exercises.map((exercise, exerciseIndex) => (
                 <div 
                   key={`${exercise.name}-${exerciseIndex}`}
@@ -767,6 +871,9 @@ const Workouts = () => {
                             Set
                           </th>
                           <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Weight (lbs)
                           </th>
                           <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -779,9 +886,18 @@ const Workouts = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {exercise.sets.map((set, setIndex) => (
-                          <tr key={`set-${setIndex}`}>
+                          <tr key={`set-${setIndex}`} className={set.type === 'warmup' ? 'bg-yellow-50' : ''}>
                             <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                               {setIndex + 1}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-md ${
+                                set.type === 'warmup' 
+                                  ? 'bg-yellow-100 text-yellow-800' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {set.type === 'warmup' ? 'Warm-up' : 'Working'}
+                              </span>
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap">
                               <input
@@ -818,7 +934,6 @@ const Workouts = () => {
                       </tbody>
                     </table>
                   </div>
-                  
                   {exercise.notes && (
                     <div className="mt-3 text-sm text-gray-500">
                       <p><span className="font-medium">Notes:</span> {exercise.notes}</p>
@@ -846,46 +961,45 @@ const Workouts = () => {
             </div>
           </div>
         </div>
-      ) : (
-        // Workouts Management Interface (Tabs)
-        <div className="mt-6">
-          {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('scheduled')}
-                className={`${
-                  activeTab === 'scheduled'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-              >
-                Scheduled
-              </button>
-              <button
-                onClick={() => setActiveTab('templates')}
-                className={`${
-                  activeTab === 'templates'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-              >
-                Templates
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`${
-                  activeTab === 'history'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-              >
-                History
-              </button>
-            </nav>
-          </div>
-          
-          {/* Tab content */}
+        ) : (
+          // Workouts Management Interface (Tabs)
+          <div className="mt-6">
+            {/* Tabs */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                <button
+                  onClick={() => setActiveTab('scheduled')}
+                  className={`${
+                    activeTab === 'scheduled'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  Scheduled
+                </button>
+                <button
+                  onClick={() => setActiveTab('templates')}
+                  className={`${
+                    activeTab === 'templates'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  Templates
+                </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`${
+                    activeTab === 'history'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  History
+                </button>
+              </nav>
+            </div>
+            {/* Tab content */}
           <div className="py-6">
             {/* Scheduled Workouts Tab */}
             {activeTab === 'scheduled' && (
@@ -962,7 +1076,6 @@ const Workouts = () => {
                 )}
               </div>
             )}
-            
             {/* Templates Tab */}
             {activeTab === 'templates' && (
               <div>
@@ -1062,13 +1175,15 @@ const Workouts = () => {
                                         <p className="text-sm font-medium text-gray-900">{exercise.name}</p>
                                         <p className="text-sm text-gray-500">
                                           {exercise.sets && exercise.sets.length} sets • Rest: {exercise.rest || 'None'}
+                                          {exercise.warmupRest && ' • Warm-up Rest: ' + exercise.warmupRest}
                                         </p>
                                       </div>
                                       {exercise.sets && (
                                         <div className="mt-1">
                                           <p className="text-xs text-gray-500">
                                             Sets: {exercise.sets.map((set, idx) => (
-                                              <span key={idx} className="inline-block mr-2">
+                                              <span key={idx} className={`inline-block mr-2 ${set.type === 'warmup' ? 'text-yellow-600' : ''}`}>
+                                                {set.type === 'warmup' ? '(W) ' : ''}
                                                 {set.weight && set.reps
                                                   ? `${set.weight} x ${set.reps}`
                                                   : 'Not specified'}
@@ -1093,7 +1208,6 @@ const Workouts = () => {
                 )}
               </div>
             )}
-            
             {/* History Tab */}
             {activeTab === 'history' && (
               <div>
