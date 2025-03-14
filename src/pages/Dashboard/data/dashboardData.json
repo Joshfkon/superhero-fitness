@@ -1,0 +1,125 @@
+{
+  "weightData": [
+    { "name": "Jan", "weight": 185 },
+    { "name": "Feb", "weight": 183 },
+    { "name": "Mar", "weight": 181 },
+    { "name": "Apr", "weight": 180 },
+    { "name": "May", "weight": 178 },
+    { "name": "Jun", "weight": 176 }
+  ],
+  "workoutData": [
+    { "name": "Mon", "chest": 4, "back": 0, "legs": 0, "shoulders": 0, "arms": 2 },
+    { "name": "Tue", "chest": 0, "back": 4, "legs": 0, "shoulders": 0, "arms": 2 },
+    { "name": "Wed", "chest": 0, "back": 0, "legs": 0, "shoulders": 0, "arms": 0 },
+    { "name": "Thu", "chest": 0, "back": 0, "legs": 4, "shoulders": 0, "arms": 0 },
+    { "name": "Fri", "chest": 0, "back": 0, "legs": 0, "shoulders": 3, "arms": 3 },
+    { "name": "Sat", "chest": 0, "back": 0, "legs": 0, "shoulders": 0, "arms": 0 },
+    { "name": "Sun", "chest": 0, "back": 0, "legs": 0, "shoulders": 0, "arms": 0 }
+  ],
+  "nutritionData": [
+    { "name": "Mon", "protein": 150, "carbs": 200, "fat": 70 },
+    { "name": "Tue", "protein": 160, "carbs": 180, "fat": 65 },
+    { "name": "Wed", "protein": 140, "carbs": 190, "fat": 60 },
+    { "name": "Thu", "protein": 170, "carbs": 170, "fat": 75 },
+    { "name": "Fri", "protein": 155, "carbs": 185, "fat": 70 },
+    { "name": "Sat", "protein": 130, "carbs": 210, "fat": 80 },
+    { "name": "Sun", "protein": 145, "carbs": 195, "fat": 65 }
+  ],
+  "oneRepMaxData": [
+    { "name": "Jan", "bench": 185, "squat": 275, "deadlift": 315, "overhead": 135 },
+    { "name": "Feb", "bench": 195, "squat": 285, "deadlift": 325, "overhead": 140 },
+    { "name": "Mar", "bench": 200, "squat": 295, "deadlift": 335, "overhead": 145 },
+    { "name": "Apr", "bench": 205, "squat": 305, "deadlift": 345, "overhead": 150 },
+    { "name": "May", "bench": 210, "squat": 315, "deadlift": 355, "overhead": 155 },
+    { "name": "Jun", "bench": 215, "squat": 325, "deadlift": 365, "overhead": 160 }
+  ],
+  "physiqueProgress": {
+    "chest": [
+      { "name": "Jan", "actual": 42, "plan": 42 },
+      { "name": "Feb", "actual": 42.5, "plan": 43 },
+      { "name": "Mar", "actual": 43, "plan": 44 },
+      { "name": "Apr", "actual": 43.5, "plan": 45 },
+      { "name": "May", "actual": 44, "plan": 46 },
+      { "name": "Jun", "actual": 44, "plan": 47 },
+      { "name": "Jul", "plan": 48 },
+      { "name": "Aug", "plan": 48 }
+    ],
+    "arms": [
+      { "name": "Jan", "actual": 14, "plan": 14 },
+      { "name": "Feb", "actual": 14.2, "plan": 14.5 },
+      { "name": "Mar", "actual": 14.5, "plan": 15 },
+      { "name": "Apr", "actual": 14.8, "plan": 15.5 },
+      { "name": "May", "actual": 15, "plan": 16 },
+      { "name": "Jun", "actual": 15, "plan": 16.5 },
+      { "name": "Jul", "plan": 17 },
+      { "name": "Aug", "plan": 17 }
+    ],
+    "shoulders": [
+      { "name": "Jan", "actual": 46, "plan": 46 },
+      { "name": "Feb", "actual": 46.5, "plan": 47 },
+      { "name": "Mar", "actual": 47, "plan": 48 },
+      { "name": "Apr", "actual": 47.5, "plan": 49 },
+      { "name": "May", "actual": 48, "plan": 50 },
+      { "name": "Jun", "actual": 48, "plan": 51 },
+      { "name": "Jul", "plan": 52 },
+      { "name": "Aug", "plan": 52 }
+    ],
+    "waist": [
+      { "name": "Jan", "actual": 34, "plan": 34 },
+      { "name": "Feb", "actual": 33.5, "plan": 33.5 },
+      { "name": "Mar", "actual": 33, "plan": 33 },
+      { "name": "Apr", "actual": 32.5, "plan": 32.5 },
+      { "name": "May", "actual": 32, "plan": 32 },
+      { "name": "Jun", "actual": 32, "plan": 31.5 },
+      { "name": "Jul", "plan": 31 },
+      { "name": "Aug", "plan": 30 }
+    ],
+    "bodyFat": [
+      { "name": "Jan", "actual": 18, "plan": 18 },
+      { "name": "Feb", "actual": 17, "plan": 17 },
+      { "name": "Mar", "actual": 16, "plan": 16 },
+      { "name": "Apr", "actual": 15, "plan": 15 },
+      { "name": "May", "actual": 14, "plan": 14 },
+      { "name": "Jun", "actual": 14, "plan": 13 },
+      { "name": "Jul", "plan": 12 },
+      { "name": "Aug", "plan": 10 }
+    ]
+  },
+  "goals": {
+    "chest": "48 inches",
+    "arms": "17 inches",
+    "shoulders": "52 inches",
+    "waist": "30 inches",
+    "bodyFat": "10%"
+  },
+  "stats": [
+    {
+      "title": "Current Weight",
+      "value": "176 lbs",
+      "icon": "Scale",
+      "change": "2 lbs",
+      "trend": "down"
+    },
+    {
+      "title": "Body Fat",
+      "value": "14%",
+      "icon": "Percent",
+      "change": "1%",
+      "trend": "down"
+    },
+    {
+      "title": "Protein Goal",
+      "value": "85%",
+      "icon": "Apple",
+      "change": "3%",
+      "trend": "up"
+    },
+    {
+      "title": "Recovery Score",
+      "value": "87/100",
+      "icon": "Activity",
+      "change": "2 pts",
+      "trend": "up"
+    }
+  ]
+} 
