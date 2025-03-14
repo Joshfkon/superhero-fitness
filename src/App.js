@@ -8,7 +8,7 @@ import Sidebar from './components/layout/Sidebar';
 import PrivateRoute from './components/PrivateRoute';
 
 // Pages
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard/Dashboard';
 import DataImport from './pages/DataImport';
 import ProfileSetup from './pages/ProfileSetup';
 import Workouts from './pages/Workouts';
