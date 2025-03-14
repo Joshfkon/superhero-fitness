@@ -17,6 +17,7 @@ import Biomarkers from './pages/Biomarkers';
 import Measurements from './pages/measurements';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AiTrainingPlan from './pages/AiTrainingPlan';
 
 // Services
 import { authService } from './services';
@@ -68,6 +69,7 @@ function App() {
             <Route path="/measurements" element={<Measurements />} />
             <Route path="/nutrition" element={<Nutrition />} />
             <Route path="/biomarkers" element={<Biomarkers />} />
+            <Route path="/ai-training-plan" element={<AiTrainingPlan />} />
           </Route>
         </Route>
 

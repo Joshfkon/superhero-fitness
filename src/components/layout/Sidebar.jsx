@@ -18,7 +18,7 @@ const Sidebar = ({ open, setOpen }) => {
   
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'AI Training Plan', href: '/training-plan', icon: Brain },
+    { name: 'AI Training Plan', href: '/ai-training-plan', icon: Brain },
     { name: 'Workouts', href: '/workouts', icon: Dumbbell },
     { name: 'Update Measurements', href: '/measurements', icon: Ruler },
     { name: 'Nutrition', href: '/nutrition', icon: Apple },
