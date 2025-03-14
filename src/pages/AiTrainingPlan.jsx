@@ -225,7 +225,8 @@ const AITrainingPlan = () => {
   const [expandedSections, setExpandedSections] = useState({
     goals: true,
     personal: false,
-    training: false
+    training: false,
+    aiCoach: false
   });
   const [userInfo, setUserInfo] = useState({
     age: 30,
@@ -238,7 +239,12 @@ const AITrainingPlan = () => {
     sessionsPerWeek: 4,
     sessionDuration: 60,
     preferredTraining: 'balanced',
-    focusAreas: ['chest', 'arms']
+    focusAreas: ['chest', 'arms'],
+    wristSize: 7, // in inches
+    dreamPhysique: 'athletic',
+    primaryGoal: 'aesthetics',
+    healthGoals: ['bloodPressure', 'energy'],
+    timeframe: 'moderate'
   });
 
   // Current measurements
@@ -642,6 +648,33 @@ const AITrainingPlan = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
   
+  // Handle dream physique selection
+  const handleDreamPhysiqueSelect = (type) => {
+    setUserInfo({
+      ...userInfo,
+      dreamPhysique: type
+    });
+  };
+  
+  // Toggle health goal selection
+  const toggleHealthGoal = (goal) => {
+    const healthGoals = [...userInfo.healthGoals];
+    
+    if (healthGoals.includes(goal)) {
+      // Remove goal if already selected
+      const index = healthGoals.indexOf(goal);
+      healthGoals.splice(index, 1);
+    } else {
+      // Add goal if not already selected
+      healthGoals.push(goal);
+    }
+    
+    setUserInfo({
+      ...userInfo,
+      healthGoals
+    });
+  };
+  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-semibold text-gray-900 flex items-center">
@@ -717,6 +750,409 @@ const AITrainingPlan = () => {
               <p className="mt-1 text-sm text-gray-500">
                 Fill out the details below so our AI can create a personalized plan based on your current state, goals, and preferences.
               </p>
+              
+              {/* AI Coach Section */}
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between text-left"
+                  onClick={() => toggleSection('aiCoach')}
+                >
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                    <Brain className="mr-2 h-5 w-5 text-indigo-500" />
+                    AI Coach Goal Setting
+                  </h3>
+                  {expandedSections.aiCoach ? (
+                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedSections.aiCoach && (
+                  <div className="mt-4">
+                    <div className="bg-indigo-50 p-4 rounded-lg mb-6">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <Brain className="h-6 w-6 text-indigo-600" />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <h4 className="text-md font-medium text-indigo-900">AI Coach</h4>
+                          <p className="mt-1 text-sm text-indigo-700">
+                            Let's figure out exactly what you want to achieve. I'll help you set realistic goals based on your body type and preferences.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                      {/* Primary Goal */}
+                      <div className="sm:col-span-2">
+                        <fieldset>
+                          <legend className="block text-sm font-medium text-gray-700 mb-3">What's your primary goal?</legend>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.primaryGoal === 'aesthetics' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('primaryGoal', 'aesthetics')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.primaryGoal === 'aesthetics' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.primaryGoal === 'aesthetics' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Aesthetics
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.primaryGoal === 'aesthetics' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Look better, build muscle, lose fat
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.primaryGoal === 'performance' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('primaryGoal', 'performance')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.primaryGoal === 'performance' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.primaryGoal === 'performance' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Performance
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.primaryGoal === 'performance' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Get stronger, faster, more powerful
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.primaryGoal === 'health' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('primaryGoal', 'health')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.primaryGoal === 'health' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.primaryGoal === 'health' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Health
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.primaryGoal === 'health' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Improve biomarkers and overall wellness
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </fieldset>
+                      </div>
+                      
+                      {/* Dream Physique */}
+                      <div className="sm:col-span-2">
+                        <fieldset>
+                          <legend className="block text-sm font-medium text-gray-700 mb-3">What's your dream physique?</legend>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.dreamPhysique === 'athletic' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex flex-col cursor-pointer focus:outline-none`}
+                              onClick={() => handleDreamPhysiqueSelect('athletic')}
+                            >
+                              <div className="h-40 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
+                                <Dumbbell className="h-10 w-10 text-gray-400" />
+                              </div>
+                              <div className="flex items-center">
+                                {userInfo.dreamPhysique === 'athletic' && (
+                                  <div className="h-5 w-5 text-indigo-600">
+                                    <CheckCircle className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <span className={`ml-2 font-medium ${userInfo.dreamPhysique === 'athletic' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                  Athletic
+                                </span>
+                              </div>
+                              <p className={`mt-1 text-xs ${userInfo.dreamPhysique === 'athletic' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                Lean, defined muscles with good proportions
+                              </p>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.dreamPhysique === 'bodybuilder' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex flex-col cursor-pointer focus:outline-none`}
+                              onClick={() => handleDreamPhysiqueSelect('bodybuilder')}
+                            >
+                              <div className="h-40 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
+                                <Dumbbell className="h-10 w-10 text-gray-400" />
+                              </div>
+                              <div className="flex items-center">
+                                {userInfo.dreamPhysique === 'bodybuilder' && (
+                                  <div className="h-5 w-5 text-indigo-600">
+                                    <CheckCircle className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <span className={`ml-2 font-medium ${userInfo.dreamPhysique === 'bodybuilder' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                  Bodybuilder
+                                </span>
+                              </div>
+                              <p className={`mt-1 text-xs ${userInfo.dreamPhysique === 'bodybuilder' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                Maximum muscle size with definition
+                              </p>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.dreamPhysique === 'powerlifter' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex flex-col cursor-pointer focus:outline-none`}
+                              onClick={() => handleDreamPhysiqueSelect('powerlifter')}
+                            >
+                              <div className="h-40 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
+                                <Dumbbell className="h-10 w-10 text-gray-400" />
+                              </div>
+                              <div className="flex items-center">
+                                {userInfo.dreamPhysique === 'powerlifter' && (
+                                  <div className="h-5 w-5 text-indigo-600">
+                                    <CheckCircle className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <span className={`ml-2 font-medium ${userInfo.dreamPhysique === 'powerlifter' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                  Powerlifter
+                                </span>
+                              </div>
+                              <p className={`mt-1 text-xs ${userInfo.dreamPhysique === 'powerlifter' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                Strong, dense muscles with focus on power
+                              </p>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.dreamPhysique === 'lean' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex flex-col cursor-pointer focus:outline-none`}
+                              onClick={() => handleDreamPhysiqueSelect('lean')}
+                            >
+                              <div className="h-40 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
+                                <Dumbbell className="h-10 w-10 text-gray-400" />
+                              </div>
+                              <div className="flex items-center">
+                                {userInfo.dreamPhysique === 'lean' && (
+                                  <div className="h-5 w-5 text-indigo-600">
+                                    <CheckCircle className="h-5 w-5" />
+                                  </div>
+                                )}
+                                <span className={`ml-2 font-medium ${userInfo.dreamPhysique === 'lean' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                  Very Lean
+                                </span>
+                              </div>
+                              <p className={`mt-1 text-xs ${userInfo.dreamPhysique === 'lean' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                Extremely low body fat with visible definition
+                              </p>
+                            </div>
+                          </div>
+                        </fieldset>
+                      </div>
+                      
+                      {/* Health Goals */}
+                      {userInfo.primaryGoal === 'health' && (
+                        <div className="sm:col-span-2">
+                          <fieldset>
+                            <legend className="block text-sm font-medium text-gray-700 mb-3">Which health markers are you trying to improve?</legend>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {[
+                                {id: 'bloodPressure', label: 'Blood Pressure'},
+                                {id: 'cholesterol', label: 'Cholesterol'},
+                                {id: 'bloodSugar', label: 'Blood Sugar'},
+                                {id: 'energy', label: 'Energy Levels'},
+                                {id: 'sleep', label: 'Sleep Quality'},
+                                {id: 'stress', label: 'Stress Management'},
+                                {id: 'mobility', label: 'Mobility & Flexibility'},
+                                {id: 'immunity', label: 'Immune Function'}
+                              ].map((goal) => (
+                                <button
+                                  key={goal.id}
+                                  type="button"
+                                  onClick={() => toggleHealthGoal(goal.id)}
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                    userInfo.healthGoals.includes(goal.id)
+                                      ? 'bg-indigo-100 text-indigo-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {goal.label}
+                                  {userInfo.healthGoals.includes(goal.id) && (
+                                    <CheckCircle className="ml-1.5 h-4 w-4" />
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </fieldset>
+                        </div>
+                      )}
+                      
+                      {/* Body Structure Measurements */}
+                      <div className="sm:col-span-2">
+                        <fieldset>
+                          <legend className="block text-sm font-medium text-gray-700 mb-3">Body Structure Measurements</legend>
+                          <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                            <div>
+                              <label htmlFor="wrist-size" className="block text-sm font-medium text-gray-700">
+                                Wrist Size (inches)
+                              </label>
+                              <input
+                                type="number"
+                                step="0.25"
+                                id="wrist-size"
+                                className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                                value={userInfo.wristSize}
+                                onChange={(e) => handleUserInfoChange('wristSize', parseFloat(e.target.value))}
+                              />
+                              <p className="mt-1 text-xs text-gray-500">
+                                Helps determine your natural frame size
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="ankle-size" className="block text-sm font-medium text-gray-700">
+                                Ankle Size (inches)
+                              </label>
+                              <input
+                                type="number"
+                                step="0.25"
+                                id="ankle-size"
+                                className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                                placeholder="Optional"
+                              />
+                              <p className="mt-1 text-xs text-gray-500">
+                                Additional data point for frame assessment
+                              </p>
+                            </div>
+                          </div>
+                        </fieldset>
+                      </div>
+                      
+                      {/* Timeframe */}
+                      <div className="sm:col-span-2">
+                        <fieldset>
+                          <legend className="block text-sm font-medium text-gray-700 mb-3">How quickly do you want to achieve your goals?</legend>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.timeframe === 'aggressive' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('timeframe', 'aggressive')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.timeframe === 'aggressive' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.timeframe === 'aggressive' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Aggressive
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.timeframe === 'aggressive' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Maximum results in minimum time
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.timeframe === 'moderate' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('timeframe', 'moderate')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.timeframe === 'moderate' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.timeframe === 'moderate' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Moderate
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.timeframe === 'moderate' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Balanced approach with steady progress
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div 
+                              className={`relative rounded-lg border ${userInfo.timeframe === 'sustainable' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-300'} p-4 flex cursor-pointer focus:outline-none`}
+                              onClick={() => handleUserInfoChange('timeframe', 'sustainable')}
+                            >
+                              <div className="flex-1 flex">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {userInfo.timeframe === 'sustainable' && (
+                                      <div className="h-5 w-5 text-indigo-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <span className={`ml-2 font-medium ${userInfo.timeframe === 'sustainable' ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      Sustainable
+                                    </span>
+                                  </div>
+                                  <p className={`mt-1 text-sm ${userInfo.timeframe === 'sustainable' ? 'text-indigo-700' : 'text-gray-500'}`}>
+                                    Gradual changes for long-term habits
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </fieldset>
+                      </div>
+                      
+                      {/* AI Recommendations */}
+                      <div className="sm:col-span-2 mt-4">
+                        <div className="bg-indigo-50 p-4 rounded-lg">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <Brain className="h-6 w-6 text-indigo-600" />
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <h4 className="text-md font-medium text-indigo-900">AI Coach Recommendations</h4>
+                              <p className="mt-1 text-sm text-indigo-700">
+                                Based on your wrist size of {userInfo.wristSize}" and height of {Math.floor(userInfo.height/12)}'{userInfo.height%12}", 
+                                you have a {userInfo.wristSize < 6.5 ? 'small' : userInfo.wristSize < 7.5 ? 'medium' : 'large'} frame.
+                                
+                                {userInfo.dreamPhysique === 'athletic' && " Your goal of an athletic physique is well-suited for your frame. I recommend focusing on balanced development with slightly more emphasis on shoulders and back for that V-taper look."}
+                                {userInfo.dreamPhysique === 'bodybuilder' && " Your bodybuilder goal will require significant muscle mass. With your frame, focus on progressive overload and ensure adequate recovery and nutrition."}
+                                {userInfo.dreamPhysique === 'powerlifter' && " For your powerlifter goal, we'll prioritize strength development with focus on the big compound lifts. Your frame is well-suited for developing power."}
+                                {userInfo.dreamPhysique === 'lean' && " Your goal of a very lean physique will require disciplined nutrition. We'll create a plan that preserves muscle while reducing body fat."}
+                              </p>
+                              
+                              <div className="mt-3 text-sm text-indigo-700">
+                                <p className="font-medium">Realistic goals for your frame:</p>
+                                <ul className="list-disc pl-5 mt-1 space-y-1">
+                                  <li>Chest: {Math.round(userInfo.wristSize * 6.5)}" potential</li>
+                                  <li>Arms: {(userInfo.wristSize * 2.5).toFixed(1)}" potential</li>
+                                  <li>Ideal body weight range: {Math.round((userInfo.height - 100) * 2.2) - 10}-{Math.round((userInfo.height - 100) * 2.2) + 10} lbs</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Body Goals Section */}
               <div className="mt-6 border-t border-gray-200 pt-6">
